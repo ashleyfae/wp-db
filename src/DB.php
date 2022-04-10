@@ -25,6 +25,7 @@ use Ashleyfae\WPDB\Exceptions\DatabaseQueryException;
  * @method static array get_col(string $query = null, int $x = 0)
  * @method static array|object|null get_results(string $query = null, string $output = OBJECT)
  * @method static string get_charset_collate()
+ * @method static string esc_like(string $text)
  */
 class DB
 {
