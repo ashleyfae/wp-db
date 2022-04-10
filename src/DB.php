@@ -28,6 +28,17 @@ use Ashleyfae\WPDB\Exceptions\DatabaseQueryException;
  */
 class DB
 {
+    /**
+     * Returns an instance of wpdb.
+     *
+     * @return \wpdb
+     */
+    public static function getInstance(): \wpdb
+    {
+        global $wpdb;
+
+        return $wpdb;
+    }
 
     /**
      * Runs the dbDelta function.
@@ -58,9 +69,7 @@ class DB
      */
     public static function prepare($query, ...$args)
     {
-        global $wpdb;
-
-        return $wpdb->prepare($query, ...$args);
+        return static::getInstance()->prepare($query, ...$args);
     }
 
     /**
@@ -78,9 +87,7 @@ class DB
     {
         return self::runQueryWithErrorChecking(
             function () use ($name, $arguments) {
-                global $wpdb;
-
-                return call_user_func_array([$wpdb, $name], $arguments);
+                return call_user_func_array([static::getInstance(), $name], $arguments);
             }
         );
     }
@@ -93,8 +100,19 @@ class DB
      */
     public static function lastInsertId(): int
     {
-        global $wpdb;
-        return (int) $wpdb->insert_id;
+        return (int) static::getInstance()->insert_id;
+    }
+
+    /**
+     * Applies the table prefix to a given table name.
+     *
+     * @param  string  $tableName
+     *
+     * @return string
+     */
+    public static function applyPrefix(string $tableName): string
+    {
+        return static::getInstance()->prefix.$tableName;
     }
 
     /**
@@ -109,16 +127,16 @@ class DB
      */
     private static function runQueryWithErrorChecking(callable $queryCaller)
     {
-        global $wpdb, $EZSQL_ERROR;
+        global $EZSQL_ERROR;
         require_once ABSPATH.'wp-admin/includes/upgrade.php';
 
         $errorCount    = is_array($EZSQL_ERROR) ? count($EZSQL_ERROR) : 0;
-        $hasShowErrors = $wpdb->hide_errors();
+        $hasShowErrors = static::getInstance()->hide_errors();
 
         $output = $queryCaller();
 
         if ($hasShowErrors) {
-            $wpdb->show_errors();
+            static::getInstance()->show_errors();
         }
 
         $wpError = self::getQueryErrors($errorCount);
