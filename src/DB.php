@@ -15,17 +15,8 @@ use Ashleyfae\WPDB\Exceptions\DatabaseQueryException;
  * Static wrapper for `\wpdb`.
  * Taken from GiveWP.
  *
- * @method static int|bool query(string $query)
- * @method static int|false insert(string $table, array $data, array|string $format)
- * @method static int|false delete(string $table, array $where, array|string $where_format)
- * @method static int|false update(string $table, array $data, array $where, array|string $format, array|string $where_format)
- * @method static int|false replace(string $table, array $data, array|string $format)
- * @method static null|string get_var(string $query = null, int $x = 0, int $y = 0)
- * @method static array|object|null|void get_row(string $query = null, string $output = OBJECT, int $y = 0)
- * @method static array get_col(string $query = null, int $x = 0)
- * @method static array|object|null get_results(string $query = null, string $output = OBJECT)
- * @method static string get_charset_collate()
- * @method static string esc_like(string $text)
+ * Common individual static methods are declared in order to document the {@throws} properly.
+ * {@see static::__callStatic()} exists as a fallback.
  */
 class DB
 {
@@ -39,6 +30,26 @@ class DB
         global $wpdb;
 
         return $wpdb;
+    }
+
+    /**
+     * Fallback for any wpdb methods not explicitly declared below.
+     *
+     * @since 1.0
+     *
+     * @param $name
+     * @param $arguments
+     *
+     * @return mixed
+     * @throws DatabaseQueryException
+     */
+    public static function __callStatic($name, $arguments)
+    {
+        return self::runQueryWithErrorChecking(
+            function () use ($name, $arguments) {
+                return call_user_func_array([static::getInstance(), $name], $arguments);
+            }
+        );
     }
 
     /**
@@ -74,23 +85,115 @@ class DB
     }
 
     /**
-     * Wrapper to statically run DB methods.
-     *
-     * @since 1.0
-     *
-     * @param $name
-     * @param $arguments
-     *
-     * @return mixed
+     * @return int|bool
      * @throws DatabaseQueryException
      */
-    public static function __callStatic($name, $arguments)
+    public static function query(string $query)
     {
         return self::runQueryWithErrorChecking(
-            function () use ($name, $arguments) {
-                return call_user_func_array([static::getInstance(), $name], $arguments);
-            }
+            fn() => static::getInstance()->query($query)
         );
+    }
+
+    /**
+     * @param array|string $format
+     * @return int|false
+     * @throws DatabaseQueryException
+     */
+    public static function insert(string $table, array $data, $format)
+    {
+        return self::runQueryWithErrorChecking(
+            fn() => static::getInstance()->insert($table, $data, $format)
+        );
+    }
+
+    /**
+     * @param array|string $where_format
+     * @return int|false
+     * @throws DatabaseQueryException
+     */
+    public static function delete(string $table, array $where, $where_format)
+    {
+        return self::runQueryWithErrorChecking(
+            fn() => static::getInstance()->delete($table, $where, $where_format)
+        );
+    }
+
+    /**
+     * @param array|string|null $format
+     * @param array|string|null $where_format
+     * @return int|false
+     * @throws DatabaseQueryException
+     */
+    public static function update(string $table, array $data, array $where, $format = null, $where_format = null)
+    {
+        return self::runQueryWithErrorChecking(
+            fn() => static::getInstance()->update($table, $data, $where, $format, $where_format)
+        );
+    }
+
+    /**
+     * @param array|string $format
+     * @return int|false
+     * @throws DatabaseQueryException
+     */
+    public static function replace(string $table, array $data, $format)
+    {
+        return self::runQueryWithErrorChecking(
+            fn() => static::getInstance()->replace($table, $data, $format)
+        );
+    }
+
+    /**
+     * @throws DatabaseQueryException
+     */
+    public static function get_var(string $query = null, int $x = 0, int $y = 0): ?string
+    {
+        return self::runQueryWithErrorChecking(
+            fn() => static::getInstance()->get_var($query, $x, $y)
+        );
+    }
+
+    /**
+     * @return array|object|null
+     * @throws DatabaseQueryException
+     */
+    public static function get_row(string $query = null, string $output = OBJECT, int $y = 0)
+    {
+        return self::runQueryWithErrorChecking(
+            fn() => static::getInstance()->get_row($query, $output, $y)
+        );
+    }
+
+    /**
+     * @throws DatabaseQueryException
+     */
+    public static function get_col(string $query = null, int $x = 0): array
+    {
+        return self::runQueryWithErrorChecking(
+            fn() => static::getInstance()->get_col($query, $x)
+        );
+    }
+
+    /**
+     * @return array|object|null
+     * @throws DatabaseQueryException
+     */
+    public static function get_results(string $query = null, string $output = OBJECT)
+    {
+        return self::runQueryWithErrorChecking(
+            fn() => static::getInstance()->get_results($query, $output)
+        );
+    }
+
+    public static function get_charset_collate(): string
+    {
+        return static::getInstance()->get_charset_collate();
+    }
+
+    public static function esc_like(string $text): string
+    {
+        return static::getInstance()->esc_like($text);
     }
 
     /**
