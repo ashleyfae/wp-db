@@ -23,6 +23,16 @@ abstract class AbstractTable implements TableInterface
     }
 
     /**
+     * Checks if the table exists.
+     *
+     * Note that this doesn't actually check the DB schema directly, just if the version is set in the database.
+     */
+    public function exists() : bool
+    {
+        return ! empty($this->getSavedVersion());
+    }
+
+    /**
      * Returns the option name for storing the database version.
      */
     protected function getVersionCacheKey(): string
